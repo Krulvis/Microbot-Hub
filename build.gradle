@@ -83,13 +83,13 @@ repositories {
 
 dependencies {
     // compileOnly 'com.microbot:client:+'
-    compileOnly files('libs/microbot-client.jar')
+    compileOnly files('libs/microbot.jar')
 
     // microbotRuntime 'com.microbot:client:+'
-    microbotRuntime files('libs/microbot-client.jar')
+    microbotRuntime files('libs/microbot.jar')
 
     // testImplementation 'com.microbot:client:+'
-    testImplementation files('libs/microbot-client.jar')
+    testImplementation files('libs/microbot.jar')
 }
 
 application {
