@@ -4,8 +4,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.config.ConfigManager;
-import net.runelite.client.eventbus.Subscribe;
-import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -17,7 +15,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
         name = "Clue Solver",
         description = "Automates solving clue scrolls by managing interactions",
         tags = {"clue", "solver", "automation"},
-        authors = { "unknown" },
+        authors = {"unknown"},
         version = ClueSolverPlugin.version,
         minClientVersion = "2.0.7",
         cardUrl = "https://chsami.github.io/Microbot-Hub/ClueSolverPlugin/assets/card.png",
@@ -42,8 +40,6 @@ public class ClueSolverPlugin extends Plugin {
     @Inject
     private ClueSolverConfig clueSolverConfig;
 
-    public static boolean isSolverRunning = false;
-
     @Provides
     ClueSolverConfig provideClueSolverConfig(ConfigManager configManager) {
         return configManager.getConfig(ClueSolverConfig.class);
@@ -54,53 +50,15 @@ public class ClueSolverPlugin extends Plugin {
         log.info("Starting Clue Solver Plugin");
         if (null != overlayManager) {
             overlayManager.add(clueSolverOverlay);
-            clueSolverOverlay.myButton.hookMouseListener();
         }
+        clueSolverScript.start();
     }
 
     @Override
     protected void shutDown() {
         log.info("Shutting down Clue Solver Plugin");
         overlayManager.remove(clueSolverOverlay);
-        clueSolverOverlay.myButton.unhookMouseListener();
-        stopClueSolver();
+        clueSolverScript.shutdown();
     }
-
-    private synchronized void startClueSolver() {
-        if (!ClueSolverPlugin.isSolverRunning) {
-            clueSolverScript.start();
-            ClueSolverPlugin.isSolverRunning = true;
-            log.info("Clue Solver Script started.");
-        }
-    }
-
-    private synchronized void stopClueSolver() {
-        if (ClueSolverPlugin.isSolverRunning) {
-            clueSolverScript.shutdown();
-            ClueSolverPlugin.isSolverRunning = false;
-            log.info("Clue Solver Script stopped.");
-        }
-    }
-
-    /**
-     * Configures the solver based on current settings.
-     * Ensures the solver state reflects the config.
-     */
-    public void configureSolver() {
-        if (!ClueSolverPlugin.isSolverRunning) {
-            startClueSolver();
-        } else {
-            stopClueSolver();
-        }
-    }
-
-    @Subscribe
-    public void onConfigChanged(ConfigChanged event) {
-        if (event.getGroup().equals("cluesolver")) {
-            log.info("Configuration change detected for Clue Solver Plugin");
-            configureSolver();
-        }
-    }
-
 
 }
