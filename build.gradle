@@ -18,6 +18,7 @@ apply from: 'gradle/plugin-utils.gradle'
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(project.ext.TARGET_JDK_VERSION)
+        vendor = JvmVendorSpec."${project.ext.JDK_VENDOR}"
     }
 }
 
@@ -75,7 +76,6 @@ configurations {
 }
 
 repositories {
-    mavenLocal()
     maven {
         url = project.ext.getNexusNightlyUrl()
     }
@@ -83,16 +83,11 @@ repositories {
 }
 
 dependencies {
-    // compileOnly 'com.microbot:client:+'
-    compileOnly files('libs/microbot.jar')
+    compileOnly 'com.microbot:client:+'
+    microbotRuntime 'com.microbot:client:+'
 
-    // microbotRuntime 'com.microbot:client:+'
-    microbotRuntime files('libs/microbot.jar')
-
-    // testImplementation 'com.microbot:client:+'
-    testImplementation files('libs/microbot.jar')
+    testImplementation 'com.microbot:client:+'
 }
-
 
 application {
     // Replace this with the actual main class inside your shaded jar
