@@ -219,7 +219,7 @@ public class TormentedDemonScript extends Script {
                 currentTarget = findNewTarget(config);
             }
             if (currentTarget != null) {
-                currentOverheadIcon = Rs2Reflection.getHeadIcon(currentTarget);
+                currentOverheadIcon = currentTarget.getHeadIcon();
                 if (currentOverheadIcon == null) {
                     logOnceToChat("Failed to retrieve HeadIcon for target.");
                     return;
@@ -268,7 +268,7 @@ public class TormentedDemonScript extends Script {
             }
         }
 
-        HeadIcon newOverheadIcon = Rs2Reflection.getHeadIcon(currentTarget);
+        HeadIcon newOverheadIcon = currentTarget.getHeadIcon();
         if (newOverheadIcon != currentOverheadIcon) {
             currentOverheadIcon = newOverheadIcon;
             if (!Rs2Inventory.isOpen()) {
@@ -323,7 +323,7 @@ public class TormentedDemonScript extends Script {
         return Rs2Npc.getAttackableNpcs("Tormented Demon")
                 .filter(npc -> npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
                 .filter(npc -> {
-                    HeadIcon demonHeadIcon = Rs2Reflection.getHeadIcon(npc);
+                    HeadIcon demonHeadIcon = npc.getHeadIcon();
                     if (demonHeadIcon != null) {
                         switchGear(config, demonHeadIcon);
                         return true;
