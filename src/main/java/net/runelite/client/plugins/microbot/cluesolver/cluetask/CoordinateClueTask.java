@@ -52,25 +52,13 @@ public class CoordinateClueTask extends ClueTask {
     protected boolean executeTask() throws Exception {
         eventBus.register(this);
         log.info("Starting CoordinateClueTask.");
-        walkToLocation();
         return true; // Task lifecycle is handled asynchronously by `onGameTick`.
     }
 
-    private void walkToLocation() {
-        if (location == null) {
-            log.error("Clue location is null.");
-            completeTask(false);
-            return;
-        }
-
-        log.info("Walking to clue location: {}", location);
-
-        if (!Rs2Walker.walkTo(location, 1)) {
-            log.error("Failed to initiate walking to location: {}", location);
-            completeTask(false);
-        }
+    @Override
+    protected WorldPoint getClueLocation() {
+        return clue.getLocation(clueScrollPlugin);
     }
-
 
     private boolean isWithinRadius(WorldPoint targetLocation, WorldPoint playerLocation, int radius) {
         int deltaX = Math.abs(targetLocation.getX() - playerLocation.getX());

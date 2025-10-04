@@ -33,8 +33,6 @@ public class ClueSolverScript extends Script {
     @Inject
     ClueScrollPlugin clueScrollPlugin;
     @Inject
-    ClueSolverOverlay overlay;
-    @Inject
     ClueSolverPlugin clueSolverPlugin;
 
     // Factory map to link ClueScroll subclasses to ClueTask suppliers
@@ -62,7 +60,33 @@ public class ClueSolverScript extends Script {
     public boolean start() {
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
-                processClues();
+                if (executorService.isShutdown()) {
+                    log.warn("Executor service is shut down; skipping task submission.");
+                    return;
+                }
+
+                ClueScroll clue = clueScrollPlugin.getClue();
+                if (clue != null && !clue.equals(currentClue)) {
+                    currentClue = clue;
+                    clueSolverPlugin.overlay.updateTaskStatus("New Clue Detected: " + clue.getClass().getSimpleName());
+                    log.info("New Clue Detected: {}", clue.getClass().getSimpleName());
+
+                    List<ItemRequirement> itemRequirements = determineRequiredItems(clue);
+                    if (!itemRequirements.isEmpty()) {
+                        RequirementHandlerTask requirementHandlerTask = new RequirementHandlerTask(client, itemRequirements, eventBus, clueScrollPlugin, clueSolverPlugin, executorService);
+
+                        CompletableFuture<Boolean> requirementFuture = new CompletableFuture<>();
+                        requirementHandlerTask.setFuture(requirementFuture);
+                        itemRequirementsTask = executorService.submit(requirementHandlerTask);
+                    }
+                } else if (currentClue == null) {
+                    clueSolverPlugin.overlay.updateTaskStatus("No clue detected.");
+                    log.info("No clue detected.");
+                } else if (itemRequirementsTask != null && !itemRequirementsTask.isDone()) {
+                    log.debug("Not yet done with item requirements task.");
+                } else if (currentTask == null || currentTask.isDone()) {
+                    startClueTask(createClueTaskForClue(currentClue));
+                }
             } catch (Exception e) {
                 log.error("Error in main scheduled task", e);
             }
@@ -70,50 +94,6 @@ public class ClueSolverScript extends Script {
 
         return true;
     }
-
-
-
-    private void processClues() {
-        if (executorService.isShutdown()) {
-            log.warn("Executor service is shut down; skipping task submission.");
-            return;
-        }
-
-        ClueScroll clue = clueScrollPlugin.getClue();
-        if (clue != null && !clue.equals(currentClue)) {
-            currentClue = clue;
-            overlay.updateTaskStatus("New Clue Detected: " + clue.getClass().getSimpleName());
-            log.info("New Clue Detected: {}", clue.getClass().getSimpleName());
-
-            List<ItemRequirement> requiredItems = determineRequiredItems(clue);
-            if (!requiredItems.isEmpty()) {
-                if (itemRequirementsTask != null && !itemRequirementsTask.isDone()) {
-                    log.warn("Previous item requirements task is still running, skipping this clue.");
-                    return;
-                }
-                RequirementHandlerTask requirementHandlerTask = new RequirementHandlerTask(client, requiredItems, eventBus, clueScrollPlugin, clueSolverPlugin, executorService);
-
-                CompletableFuture<Boolean> requirementFuture = new CompletableFuture<>();
-                requirementHandlerTask.setFuture(requirementFuture);
-
-                requirementFuture.thenRun(this::onRequirementsMet)
-                        .exceptionally(ex -> {
-                            log.error("Failed to fulfill requirements", ex);
-                            overlay.updateTaskStatus("Requirement fulfillment failed");
-                            return null;
-                        });
-
-                if (!executorService.isShutdown()) {
-                   itemRequirementsTask = executorService.submit(requirementHandlerTask);
-                }
-            } else {
-                startClueTask(createClueTaskForClue(clue));
-            }
-        } else {
-            log.debug("No new clue detected or clue already being processed.");
-        }
-    }
-
 
     private List<ItemRequirement> determineRequiredItems(ClueScroll clue) {
         List<ItemRequirement> requiredItems = new ArrayList<>();
@@ -150,19 +130,21 @@ public class ClueSolverScript extends Script {
         return (taskSupplier != null) ? taskSupplier.get() : null;
     }
 
-    private void onRequirementsMet() {
-        if (currentClue != null) {
-            overlay.updateTaskStatus("Starting clue task...");
-            startClueTask(createClueTaskForClue(currentClue));
-        }
-    }
-
     private void startClueTask(ClueTask task) {
+        String clueType = currentClue.getClass().getSimpleName();
         if (task == null) {
-            log.warn("No task found for clue type: {}", currentClue.getClass().getSimpleName());
+            log.warn("No task found for clue type: {}", clueType);
             return;
         }
-
+        clueSolverPlugin.overlay.updateTaskStatus("Starting clue task for clue type: " + clueType);
+        if (task.shouldWalkToLocation()) {
+            currentTask = executorService.submit(() -> {
+                clueSolverPlugin.overlay.updateTaskStatus("Walking to clue location...");
+                log.debug("Walking to clue location");
+                return task.walkToClueLocation();
+            });
+            return;
+        }
         currentTask = executorService.submit(() -> {
             CompletableFuture<Boolean> future = new CompletableFuture<>();
             task.setFuture(future);
@@ -170,7 +152,7 @@ public class ClueSolverScript extends Script {
 
             try {
                 boolean result = future.get();
-                overlay.updateTaskStatus("Clue Task completed: " + (result ? "Success" : "Failed"));
+                clueSolverPlugin.overlay.updateTaskStatus(clueType + " Task completed: " + (result ? "Success" : "Failed"));
                 return result;
             } catch (Exception e) {
                 log.error("Error executing clue task", e);
@@ -182,7 +164,8 @@ public class ClueSolverScript extends Script {
     }
 
     private void resetCurrentClue() {
-        overlay.updateTaskStatus("Waiting for new clue...");
+        clueSolverPlugin.overlay.updateTaskStatus("Reset current clue");
+        log.debug("Reset current clue");
         currentClue = null;
     }
 
@@ -197,7 +180,7 @@ public class ClueSolverScript extends Script {
         }
         eventBus.unregister(this);
 
-        overlay.updateTaskStatus("Clue Solver Script stopped");
+        clueSolverPlugin.overlay.updateTaskStatus("Clue Solver Script stopped");
         log.info("Clue Solver Script stopped.");
     }
 

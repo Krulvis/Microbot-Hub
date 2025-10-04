@@ -41,29 +41,11 @@ public class ThreeStepCrypticClueTask extends ClueTask {
     protected boolean executeTask() throws Exception {
         eventBus.register(this);
         log.info("Executing ThreeStepCrypticClueTask");
-        navigateToStepLocation();
         return true;
     }
 
-    private void navigateToStepLocation() {
-        WorldPoint location = getLocationForCurrentStep();
-        if (location == null) {
-            log.error("Location for current step is null.");
-            completeTask(false);
-            return;
-        }
-
-        log.info("Navigating to location for {}: {}", state, location);
-        backgroundExecutor.submit(() -> {
-            boolean startedWalking = Rs2Walker.walkTo(location, 1);
-            if (!startedWalking) {
-                log.error("Failed to initiate walking to location: {}", location);
-                completeTask(false);
-            }
-        });
-    }
-
-    private WorldPoint getLocationForCurrentStep() {
+    @Override
+    protected WorldPoint getClueLocation() {
         switch (state) {
             case STEP_ONE:
                 return clue.getClueSteps().get(0).getKey().getLocation(clueScrollPlugin);
@@ -82,7 +64,7 @@ public class ThreeStepCrypticClueTask extends ClueTask {
         if (player == null) return;
 
         WorldPoint playerLocation = player.getWorldLocation();
-        WorldPoint targetLocation = getLocationForCurrentStep();
+        WorldPoint targetLocation = getClueLocation();
 
         if (targetLocation != null && playerLocation.distanceTo(targetLocation) < 3) {
             log.info("Player arrived at the location for {}.", state);
@@ -95,13 +77,13 @@ public class ThreeStepCrypticClueTask extends ClueTask {
             case STEP_ONE:
                 log.info("Processing step one of the cryptic clue.");
                 state = State.STEP_TWO;
-                navigateToStepLocation();
+                walkToClueLocation();
                 break;
 
             case STEP_TWO:
                 log.info("Processing step two of the cryptic clue.");
                 state = State.STEP_THREE;
-                navigateToStepLocation();
+                walkToClueLocation();
                 break;
 
             case STEP_THREE:

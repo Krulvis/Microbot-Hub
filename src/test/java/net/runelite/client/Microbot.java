@@ -1,20 +1,16 @@
 package net.runelite.client;
 
+import net.runelite.client.plugins.microbot.cluesolver.ClueSolverPlugin;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import net.runelite.client.plugins.fishing.FishingPlugin;
-import net.runelite.client.plugins.microbot.aiofighter.AIOFighterPlugin;
-import net.runelite.client.plugins.microbot.astralrc.AstralRunesPlugin;
-import net.runelite.client.plugins.microbot.autofishing.AutoFishingPlugin;
-import net.runelite.client.plugins.microbot.example.ExamplePlugin;
 
 public class Microbot
 {
 
 	private static final Class<?>[] debugPlugins = {
-		AIOFighterPlugin.class
+		ClueSolverPlugin.class
 	};
 
     public static void main(String[] args) throws Exception

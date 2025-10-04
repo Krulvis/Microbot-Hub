@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.client.callback.ClientThread;
@@ -168,5 +169,10 @@ public class RequirementHandlerTask extends ClueTask {
         super.completeTask(success);
         eventBus.unregister(this);
         log.info("Requirement handling task completed with status: {}", success ? "Success" : "Failure");
+    }
+
+    @Override
+    protected WorldPoint getClueLocation() {
+        return null;
     }
 }

@@ -47,27 +47,14 @@ public class CipherClueTask extends ClueTask {
     protected boolean executeTask() {
         eventBus.register(this);
         log.info("Starting CipherClueTask.");
-        walkToLocation();
         return true;
     }
 
-    private void walkToLocation() {
-        WorldPoint location = clue.getLocation(clueScrollPlugin);
-        if (location == null) {
-            log.error("Clue location is null.");
-            completeTask(false);
-            return;
-        }
-
-        log.info("Walking to location: {}", location);
-        backgroundExecutor.submit(() -> {
-            boolean startedWalking = Rs2Walker.walkTo(location);
-            if (!startedWalking) {
-                log.error("Failed to initiate walking to location: {}", location);
-                completeTask(false);
-            }
-        });
+    @Override
+    protected WorldPoint getClueLocation() {
+        return clue.getLocation(clueScrollPlugin);
     }
+
 
     private boolean isWithinRadius(WorldPoint targetLocation, WorldPoint playerLocation, int radius) {
         int deltaX = Math.abs(targetLocation.getX() - playerLocation.getX());

@@ -50,6 +50,11 @@ public class FaloTheBardClueTask extends ClueTask {
         }
     }
 
+    @Override
+    protected WorldPoint getClueLocation() {
+        return null;
+    }
+
     private boolean navigateToLocation() {
         WorldPoint location = client.getLocalPlayer().getWorldLocation(); // Placeholder for actual location retrieval logic
         if (location == null) {

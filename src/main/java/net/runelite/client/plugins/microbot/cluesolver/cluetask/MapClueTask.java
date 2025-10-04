@@ -49,25 +49,12 @@ public class MapClueTask extends ClueTask {
     protected boolean executeTask() {
         eventBus.register(this);
         log.info("Starting MapClueTask.");
-        walkToLocation();
         return true;
     }
 
-    private void walkToLocation() {
-        if (location == null) {
-            log.error("Map clue location is null.");
-            completeTask(false);
-            return;
-        }
-
-        log.info("Submitting walking task to background executor for location: {}", location);
-        backgroundExecutor.submit(() -> {
-            boolean startedWalking = Rs2Walker.walkTo(location, 1);
-            if (!startedWalking) {
-                log.error("Failed to initiate walking to location: {}", location);
-                completeTask(false);
-            }
-        });
+    @Override
+    protected WorldPoint getClueLocation() {
+        return clue.getLocation(clueScrollPlugin);
     }
 
     @Subscribe

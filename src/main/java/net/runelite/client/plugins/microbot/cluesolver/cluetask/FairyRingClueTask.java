@@ -39,26 +39,12 @@ public class FairyRingClueTask extends ClueTask {
     @Override
     protected boolean executeTask() {
         log.info("Executing Fairy Ring clue task.");
-        navigateToFairyRing();
         return true;
     }
 
-    private void navigateToFairyRing() {
-        WorldPoint location = clue.getLocation(clueScrollPlugin);
-        if (location == null) {
-            log.error("Location for Fairy Ring clue is null.");
-            completeTask(false);
-            return;
-        }
-
-        log.info("Navigating to Fairy Ring location: {}", location);
-        backgroundExecutor.submit(() -> {
-            boolean startedWalking = Rs2Walker.walkTo(location, 1);
-            if (!startedWalking) {
-                log.error("Failed to initiate walking to location: {}", location);
-                completeTask(false);
-            }
-        });
+    @Override
+    protected WorldPoint getClueLocation() {
+        return clue.getLocation(clueScrollPlugin);
     }
 
     @Subscribe

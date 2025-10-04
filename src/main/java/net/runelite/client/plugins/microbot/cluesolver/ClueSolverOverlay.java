@@ -14,7 +14,7 @@ import java.awt.*;
 public class ClueSolverOverlay extends OverlayPanel {
 
     @Setter
-    private String currentTaskStatus = "Idle";  // Default message
+    private String currentTaskStatus = "Idle";
 
     @Inject
     public ClueSolverOverlay(ClueSolverPlugin plugin) {
@@ -28,7 +28,8 @@ public class ClueSolverOverlay extends OverlayPanel {
      * @param status The current status message of the task.
      */
     public void updateTaskStatus(String status) {
-        setCurrentTaskStatus(status);
+        log.debug("Updating task status to: {}", status);
+        currentTaskStatus = status;
     }
 
     @Override

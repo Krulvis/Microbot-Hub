@@ -3,6 +3,7 @@ package net.runelite.client.plugins.microbot.cluesolver.cluetask;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameTick;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
@@ -43,22 +44,11 @@ public class SkillChallengeClueTask extends ClueTask {
         return true;
     }
 
-//    private void navigateToLocation() {
-//        if (clue.getLocation(clueScrollPlugin) == null) {
-//            log.error("Skill challenge clue location is null.");
-//            completeTask(false);
-//            return;
-//        }
-//
-//        log.info("Navigating to skill challenge location: {}", clue.getLocation(clueScrollPlugin));
-//        backgroundExecutor.submit(() -> {
-//            boolean startedWalking = Rs2Walker.walkTo(clue.getLocation(clueScrollPlugin), 1);
-//            if (!startedWalking) {
-//                log.error("Failed to start walking to location: {}", clue.getLocation(clueScrollPlugin));
-//                completeTask(false);
-//            }
-//        });
-//    }
+    @Override
+    protected WorldPoint getClueLocation() {
+        return null; //Need to determine location for skill challenge
+    }
+
 
     @Subscribe
     public void onGameTick(GameTick event) {
@@ -67,7 +57,7 @@ public class SkillChallengeClueTask extends ClueTask {
 
         switch (state) {
             case NAVIGATING_TO_LOCATION:
-                if (isPlayerAtLocation()) {
+                if (!shouldWalkToLocation()) {
                     log.info("Player has arrived at the skill challenge location.");
                     state = State.PERFORMING_SKILL_TASK;
                     performSkillTask();
@@ -97,10 +87,6 @@ public class SkillChallengeClueTask extends ClueTask {
                 completeTask(true);
                 break;
         }
-    }
-
-    private boolean isPlayerAtLocation() {
-        return false;
     }
 
     private void performSkillTask() {

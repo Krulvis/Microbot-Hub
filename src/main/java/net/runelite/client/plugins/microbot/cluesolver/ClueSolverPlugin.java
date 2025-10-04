@@ -8,6 +8,7 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.cluescrolls.ClueScrollPlugin;
+import net.runelite.client.plugins.cluescrolls.clues.ClueScroll;
 import net.runelite.client.plugins.microbot.PluginConstants;
 import net.runelite.client.ui.overlay.OverlayManager;
 
@@ -32,7 +33,7 @@ public class ClueSolverPlugin extends Plugin {
     private ClueSolverScript clueSolverScript;
 
     @Inject
-    private ClueSolverOverlay clueSolverOverlay;
+    public ClueSolverOverlay overlay;
 
     @Inject
     private OverlayManager overlayManager;
@@ -49,7 +50,7 @@ public class ClueSolverPlugin extends Plugin {
     protected void startUp() {
         log.info("Starting Clue Solver Plugin");
         if (null != overlayManager) {
-            overlayManager.add(clueSolverOverlay);
+            overlayManager.add(overlay);
         }
         clueSolverScript.start();
     }
@@ -57,7 +58,7 @@ public class ClueSolverPlugin extends Plugin {
     @Override
     protected void shutDown() {
         log.info("Shutting down Clue Solver Plugin");
-        overlayManager.remove(clueSolverOverlay);
+        overlayManager.remove(overlay);
         clueSolverScript.shutdown();
     }
 

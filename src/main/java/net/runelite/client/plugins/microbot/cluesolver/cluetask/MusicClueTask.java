@@ -45,25 +45,12 @@ public class MusicClueTask extends ClueTask {
     protected boolean executeTask() throws Exception {
         eventBus.register(this);
         log.info("Executing MusicClueTask.");
-        walkToLocation();
         return true; // Task runs asynchronously; lifecycle managed in onGameTick.
     }
 
-    private void walkToLocation() {
-        if (location == null) {
-            log.error("Music clue location is null.");
-            completeTask(false);
-            return;
-        }
-
-        log.info("Submitting walking task to background executor for location: {}", location);
-
-            boolean startedWalking = Rs2Walker.walkTo(location, 1);
-            if (!startedWalking) {
-                log.error("Failed to initiate walking to location: {}", location);
-                completeTask(false);
-            }
-
+    @Override
+    protected WorldPoint getClueLocation() {
+        return clue.getLocation(clueScrollPlugin);
     }
 
     @Subscribe

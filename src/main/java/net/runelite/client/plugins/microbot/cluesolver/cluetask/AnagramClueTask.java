@@ -15,7 +15,6 @@ import net.runelite.client.plugins.microbot.util.dialogues.Rs2Dialogue;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
 import net.runelite.client.plugins.microbot.util.keyboard.Rs2Keyboard;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
-import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -25,17 +24,16 @@ public class AnagramClueTask extends ClueTask {
     private final AnagramClue clue;
     private final EventBus eventBus;
     private final ExecutorService backgroundExecutor;
-    private WorldPoint location;
     private Future<?> currentTask;
+
     private enum State {
-        WALKING_TO_LOCATION,
         INTERACTING_WITH_OBJECT,
         INTERACTING_WITH_NPC,
         HANDLING_DIALOGUE,
         COMPLETED
     }
 
-    private State state = State.WALKING_TO_LOCATION;
+    private State state;
 
     public AnagramClueTask(Client client, AnagramClue clue, ClueScrollPlugin clueScrollPlugin,
                            ClueSolverPlugin clueSolverPlugin, EventBus eventBus, ExecutorService backgroundExecutor) {
@@ -43,25 +41,21 @@ public class AnagramClueTask extends ClueTask {
         this.clue = clue;
         this.eventBus = eventBus;
         this.backgroundExecutor = backgroundExecutor;
-        this.location = clue.getLocation(clueScrollPlugin);
+        transitionToInteractionState();
     }
 
     @Override
     protected boolean executeTask() throws Exception {
         eventBus.register(this);
         log.info("Executing AnagramClueTask.");
-        walkToLocation();
         return true; // Task runs asynchronously; completion managed in onGameTick.
     }
 
-    private void walkToLocation() {
-        log.info("Walking to location: {}", location);
-        boolean startedWalking = Rs2Walker.walkTo(location, 2);
-        if (!startedWalking) {
-            log.error("Failed to initiate walking to location: {}", location);
-            completeTask(false);
-        }
+    @Override
+    protected WorldPoint getClueLocation() {
+        return clue.getLocation(clueScrollPlugin);
     }
+
 
     @SneakyThrows
     @Subscribe
@@ -85,14 +79,6 @@ public class AnagramClueTask extends ClueTask {
             return;
 
         switch (state) {
-            case WALKING_TO_LOCATION:
-                if (hasArrived(player)) {
-                    transitionToInteractionState();
-                } else if (isWithinRadius(location, player.getWorldLocation(), 3)) {
-                    Rs2Walker.walkFastCanvas(location);
-                }
-                break;
-
             case INTERACTING_WITH_OBJECT:
                 if (interactWithObject()) {
                     completeTask(true);
@@ -195,10 +181,6 @@ public class AnagramClueTask extends ClueTask {
         }
         log.warn("Dialogue handling failed.");
         return false;
-    }
-
-    private boolean hasArrived(Player player) {
-        return player.getWorldLocation().equals(location);
     }
 
     private boolean isWithinRadius(WorldPoint targetLocation, WorldPoint playerLocation, int radius) {

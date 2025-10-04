@@ -51,6 +51,11 @@ public class HotColdClueTask extends ClueTask {
         return true;
     }
 
+    @Override
+    protected WorldPoint getClueLocation() {
+        return null;
+    }
+
     private void navigateToGeneralLocation() {
         WorldPoint startingLocation = clue.getLocation(clueScrollPlugin);
         if (startingLocation == null) {

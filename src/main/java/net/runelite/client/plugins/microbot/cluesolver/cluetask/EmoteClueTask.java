@@ -65,26 +65,12 @@ public class EmoteClueTask extends ClueTask {
         }
         eventBus.register(this);
         log.info("Starting EmoteClueTask.");
-        walkToLocation(); // Only initiate the walk here; further logic is handled in onGameTick
         return true;
     }
 
-
-    private void walkToLocation() {
-        WorldPoint location = clue.getLocation(clueScrollPlugin);
-        if (location == null) {
-            log.error("Clue location is null.");
-            completeTask(false);
-            return;
-        }
-
-        log.info("Walking to clue location: {}", location);
-        backgroundExecutor.submit(() -> {
-            if (!Rs2Walker.walkTo(location, 0)) {
-                log.error("Failed to initiate walking to location: {}", location);
-                completeTask(false);
-            }
-        });
+    @Override
+    protected WorldPoint getClueLocation() {
+        return clue.getLocation(clueScrollPlugin);
     }
 
     @Subscribe
