@@ -16,12 +16,13 @@ import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.plugins.microbot.util.npc.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+
+import static net.runelite.client.plugins.microbot.util.Global.sleepUntil;
 
 @Slf4j
 public class CrypticClueTask extends ClueTask {
-    private Future<?> currentTask;
     private final CrypticClue clue;
 
     private enum State {WALKING_TO_LOCATION, KILLING_ENEMY, COLLECT_KEY, LOOTING_ITEM, INTERACTING_WITH_OBJECT, INTERACTING_WITH_NPC, HANDLING_DIALOGUE, COMPLETED}
@@ -45,18 +46,9 @@ public class CrypticClueTask extends ClueTask {
                 if (Rs2Inventory.contains("Key")) {
                     log.info("Collected key.");
                     transitionToNextState();
-                } else if (client.getLocalPlayer().getWorldLocation().getPlane() > 0) {
-                    Rs2Walker.walkFastCanvas(getClueLocation().dz(-1));
-                } else {
-                    Rs2NpcModel npc = Rs2Npc.getNpc(clue.getNpc(clueScrollPlugin));
-                    if (npc == null) {
-                        log.warn("NPC {} not found at the location.", clue.getNpc(clueScrollPlugin));
-                        return false;
-                    }
-                    if (Rs2Npc.interact(npc, "Attack")) {
-                        log.info("Attacked to NPC.");
-                    }
+                    break;
                 }
+                collectKeyFromMen();
                 break;
             case KILLING_ENEMY:
                 if (killEnemy()) {
@@ -126,6 +118,20 @@ public class CrypticClueTask extends ClueTask {
         int deltaX = Math.abs(targetLocation.getX() - playerLocation.getX());
         int deltaY = Math.abs(targetLocation.getY() - playerLocation.getY());
         return deltaX <= radius && deltaY <= radius;
+    }
+
+    private void collectKeyFromMen() {
+        RS2Item item = Arrays.stream(Rs2GroundItem.getAll(15)).filter(i -> i.getItem().getName().contains("Key")).findAny().orElse(null);
+        if (Rs2GroundItem.interact(item)) {
+            sleepUntil(() -> Rs2Inventory.contains("Key"), 10000);
+            return;
+        }
+        Rs2NpcModel npc = Rs2Npc.getNpc(clue.getNpc(clueScrollPlugin));
+        if (npc == null) {
+            Rs2Walker.walkFastCanvas(getClueLocation().dz(-1));
+        } else if (Rs2Npc.interact(npc, "Attack")) {
+            log.info("Attacked to NPC.");
+        }
     }
 
     private void transitionToNextState() {
